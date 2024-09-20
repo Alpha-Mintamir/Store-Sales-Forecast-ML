@@ -102,7 +102,7 @@ def handle_no_promo_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 
-def save_dataframe_to_csv(df: pd.DataFrame, filename: str, directory: str = '../data') -> None:
+def save_dataframe_to_csv(df: pd.DataFrame, filename: str, directory: str = '../../data') -> None:
     """
     Save a DataFrame to a CSV file in the specified directory.
     
