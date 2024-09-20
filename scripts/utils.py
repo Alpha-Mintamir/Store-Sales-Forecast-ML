@@ -1,7 +1,8 @@
 import pandas as pd
+import os
 
-def data_loader():
-    data = pd.read_csv('../data/store.csv')
+def data_loader(path):
+    data = pd.read_csv(path)
     return data
 
 def column_summary(df):
@@ -39,19 +40,21 @@ def impute_missing_values(df: pd.DataFrame, column: str, method: str = 'mean') -
     Parameters:
     df (pd.DataFrame): The DataFrame containing the column with missing values.
     column (str): The name of the column to impute.
-    method (str): The imputation method to use ('mean' or 'median'). Default is 'mean'.
+    method (str): The imputation method to use ('mean', 'mode' or 'median'). Default is 'mean'.
     
     Returns:
     pd.DataFrame: The DataFrame with missing values imputed.
     """
     
-    if method not in ['mean', 'median']:
-        raise ValueError("Method must be 'mean' or 'median'")
+    if method not in ['mean', 'median', 'mode']:
+        raise ValueError("Method must be 'mean', 'mode' or 'median'")
     
     if method == 'mean':
         value = df[column].mean()
     elif method == 'median':
         value = df[column].median()
+    elif method == 'mode':
+        value = df[column].mode()[0]
     
     df[column].fillna(value, inplace=True)
     
@@ -96,3 +99,27 @@ def handle_no_promo_data(df: pd.DataFrame) -> pd.DataFrame:
     df['PromoInterval'].fillna('No Promo', inplace=True)
 
     return df
+
+
+
+def save_dataframe_to_csv(df: pd.DataFrame, filename: str, directory: str = '../data') -> None:
+    """
+    Save a DataFrame to a CSV file in the specified directory.
+    
+    Parameters:
+    df (pd.DataFrame): The DataFrame to be saved.
+    filename (str): The name of the CSV file (including .csv extension).
+    directory (str): The directory where the file will be saved. Default is '../data'.
+    
+    Returns:
+    None
+    """
+    # Ensure the directory exists
+    os.makedirs(directory, exist_ok=True)
+    
+    # Construct the full file path
+    file_path = os.path.join(directory, filename)
+    
+    # Save the DataFrame as a CSV
+    df.to_csv(file_path, index=False)
+    print(f"DataFrame saved to {file_path}")
