@@ -1,11 +1,41 @@
 import pandas as pd
 import os
+import logging
+
+# Logging configuration
+log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+log_file_info = os.path.join(log_dir, 'info.log')
+log_file_error = os.path.join(log_dir, 'error.log')
+
+info_handler = logging.FileHandler(log_file_info)
+info_handler.setLevel(logging.INFO)
+
+error_handler = logging.FileHandler(log_file_error)
+error_handler.setLevel(logging.ERROR)
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+info_handler.setFormatter(formatter)
+error_handler.setFormatter(formatter)
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(info_handler)
+logger.addHandler(error_handler)
 
 def data_loader(path):
+    """Load data from a CSV file."""
+    logger.info(f'Loading data from {path}')
     data = pd.read_csv(path)
+    logger.info('Data loaded successfully')
     return data
 
 def column_summary(df):
+    """Generate a summary of columns in the DataFrame."""
+    logger.info('Generating column summary')
     summary_data = []
     
     for col_name in df.columns:
@@ -30,23 +60,15 @@ def column_summary(df):
         })
     
     summary_df = pd.DataFrame(summary_data)
+    logger.info('Column summary generated successfully')
     return summary_df
 
-
 def impute_missing_values(df: pd.DataFrame, column: str, method: str = 'mean') -> pd.DataFrame:
-    """
-    Impute missing values in the specified column of a DataFrame.
-    
-    Parameters:
-    df (pd.DataFrame): The DataFrame containing the column with missing values.
-    column (str): The name of the column to impute.
-    method (str): The imputation method to use ('mean', 'mode' or 'median'). Default is 'mean'.
-    
-    Returns:
-    pd.DataFrame: The DataFrame with missing values imputed.
-    """
+    """Impute missing values in the specified column of a DataFrame."""
+    logger.info(f'Imputing missing values in column: {column} using method: {method}')
     
     if method not in ['mean', 'median', 'mode']:
+        logger.error("Invalid imputation method provided.")
         raise ValueError("Method must be 'mean', 'mode' or 'median'")
     
     if method == 'mean':
@@ -57,69 +79,40 @@ def impute_missing_values(df: pd.DataFrame, column: str, method: str = 'mean') -
         value = df[column].mode()[0]
     
     df[column].fillna(value, inplace=True)
+    logger.info(f'Missing values imputed in column: {column}')
     
     return df
 
-
-
-
 def impute_with_historical_averages(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Impute missing values in 'CompetitionOpenSinceMonth' and 'CompetitionOpenSinceYear'
-    with the historical average values.
+    """Impute missing values in 'CompetitionOpenSinceMonth' and 'CompetitionOpenSinceYear'."""
+    logger.info('Imputing missing values with historical averages')
     
-    Parameters:
-    df (pd.DataFrame): The DataFrame containing the columns with missing values.
-    
-    Returns:
-    pd.DataFrame: The DataFrame with missing values imputed.
-    """
-    
-    # For 'CompetitionOpenSinceMonth', use the mode (most frequent month)
     mode_month = df['CompetitionOpenSinceMonth'].mode()[0]
-    
-    # For 'CompetitionOpenSinceYear', use the mode (most frequent year)
     mode_year = df['CompetitionOpenSinceYear'].mode()[0]
     
-    # Fill missing values with the mode values
     df['CompetitionOpenSinceMonth'].fillna(mode_month, inplace=True)
     df['CompetitionOpenSinceYear'].fillna(mode_year, inplace=True)
     
+    logger.info('Missing values imputed with historical averages')
     return df
-
-
-
 
 def handle_no_promo_data(df: pd.DataFrame) -> pd.DataFrame:
-    # For Promo2SinceWeek and Promo2SinceYear, impute with 0 (or -1) indicating no promotion
+    """Handle missing promo data."""
+    logger.info('Handling missing promo data')
+    
     df['Promo2SinceWeek'].fillna(0, inplace=True)  
     df['Promo2SinceYear'].fillna(0, inplace=True)  
-
-    # For PromoInterval, impute with 'No Promo' to indicate no promotion intervals
     df['PromoInterval'].fillna('No Promo', inplace=True)
 
+    logger.info('Missing promo data handled successfully')
     return df
 
-
-
 def save_dataframe_to_csv(df: pd.DataFrame, filename: str, directory: str = '../../data') -> None:
-    """
-    Save a DataFrame to a CSV file in the specified directory.
+    """Save a DataFrame to a CSV file."""
+    logger.info(f'Saving DataFrame to {directory}/{filename}')
     
-    Parameters:
-    df (pd.DataFrame): The DataFrame to be saved.
-    filename (str): The name of the CSV file (including .csv extension).
-    directory (str): The directory where the file will be saved. Default is '../data'.
-    
-    Returns:
-    None
-    """
-    # Ensure the directory exists
     os.makedirs(directory, exist_ok=True)
-    
-    # Construct the full file path
     file_path = os.path.join(directory, filename)
     
-    # Save the DataFrame as a CSV
     df.to_csv(file_path, index=False)
-    print(f"DataFrame saved to {file_path}")
+    logger.info(f'DataFrame saved to {file_path}')
